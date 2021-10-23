@@ -1,11 +1,11 @@
-// fsarray.h  INCOMPLETE
+// FSTArray.h  INCOMPLETE
 // VERSION 6
 // Glenn G. Chappell
 // Started: 2021-10-12
 // Updated: 2021-10-20
 //
 // For CS 311 Fall 2021
-// Header for class FSArray
+// Header for class FSTArray
 // Frightfully smart array of int
 // Preliminary to Project 5
 
@@ -40,22 +40,27 @@
 //   - Add constant DEFAULT_CAP and use it in setting the capacity in
 //     default ctor/ctor from size.
 
-#ifndef FILE_FSARRAY_H_INCLUDED
-#define FILE_FSARRAY_H_INCLUDED
+#ifndef FILE_FSTArray_H_INCLUDED
+#define FILE_FSTArray_H_INCLUDED
 
 #include <cstddef>
 // For std::size_t
 #include <algorithm>
 // For std::max
 // For std::swap
+#include <stdexcept>
+// For std::out_of_range
+#include <cstring>
+// For std::memcpy
 
+#include <iostream>
 
 // *********************************************************************
-// class FSArray - Class definition
+// class FSTArray - Class definition
 // *********************************************************************
 
 
-// class FSArray
+// class FSTArray
 // Frightfully Smart Array of int.
 // Resizable, copyable/movable, exception-safe.
 // Invariants:
@@ -65,12 +70,14 @@
 //      _capacity == 0, in which case _data may be nullptr.
 //
 // value_type = value type of array elements
-template <typename value_type>
-class FSArray {
+template <typename valType>
+class FSTArray {
 
-// ***** FSArray: types *****
+// ***** FSTArray: types *****
 public:
 
+    // value_type: type of data items
+    using value_type = valType;
     // size_type: type of sizes & indices
     using size_type = std::size_t;
 
@@ -78,18 +85,18 @@ public:
     using iterator = value_type *;
     using const_iterator = const value_type *;
 
-// ***** FSArray: internal-use constants *****
+// ***** FSTArray: internal-use constants *****
 private:
 
     // Capacity of default-constructed object
     enum { DEFAULT_CAP = 16 };
 
-// ***** FSArray: ctors, op=, dctor *****
+// ***** FSTArray: ctors, op=, dctor *****
 public:
 
     // Default ctor & ctor from size
     // Strong Guarantee
-    explicit FSArray(size_type size=0)
+    explicit FSTArray(size_type size=0)
         :_capacity(std::max(size, size_type(DEFAULT_CAP))),
             // _capacity must be declared before _data
          _size(size),
@@ -99,7 +106,7 @@ public:
 
     // Copy ctor
     // Strong Guarantee
-    FSArray(const FSArray & other):
+    FSTArray(const FSTArray & other):
         _capacity(other._capacity),
         _size(other.size()),
         _data(other._capacity == 0 ? nullptr
@@ -107,13 +114,13 @@ public:
     {
         //_data = new value_type[_size];
         for(auto i=0; i<_size; i++){
-            *_data[i] = *FSArray._data[i];
+            _data[i] = other._data[i];
         }
     }
 
     // Move ctor
     // No-Throw Guarantee
-    FSArray(FSArray && other) noexcept
+    FSTArray(FSTArray && other) noexcept
             :_capacity(other._capacity),
              _size(other._size),
              _data(other._data)
@@ -125,57 +132,63 @@ public:
 
     // Copy assignment operator
     // ??? Guarantee
-    FSArray & operator=(const FSArray & other)
+    FSTArray & operator=(const FSTArray & other)
     {
-        FSArray copyRhs(other);
-        arraySwap(copyRhs);
+        FSTArray copyRhs(other);
+        swap(copyRhs);
         return *this; // DUMMY
     }
 
     // Move assignment operator
     // No-Throw Guarantee
-    FSArray & operator=(FSArray && other) noexcept
+    FSTArray & operator=(FSTArray && other) noexcept
     {
-        arraySwap(other)
+        swap(other);
         return *this; // DUMMY
     }
 
     // Dctor
     // No-Throw Guarantee
-    ~FSArray()
+    ~FSTArray()
     {
         delete [] _data;
     }
 
-// ***** FSArray: general public operators *****
+// ***** FSTArray: general public operators *****
 public:
 
     // operator[] - non-const & const
     // Pre:
-    //     ???
+    //     index must be non-zero
+    //     index must not be greater than size of array
     // No-Throw Guarantee
     value_type & operator[](size_type index)
     {
+        // throw try functions here
+        if(index < 0 || index > _size)
+            throw std::out_of_range("bad index.");
         return _data[index];
     }
     const value_type & operator[](size_type index) const
     {
+        if(index < 0 || index > _size)
+            throw std::out_of_range("bad index.");
         return _data[index];
     }
 
-// ***** FSArray: general public functions *****
+// ***** FSTArray: general public functions *****
 public:
 
     // size
     // No-Throw Guarantee
-    size_type size() const noexcept
+    [[nodiscard]] size_type size() const noexcept
     {
         return _size;
     }
 
     // empty
     // No-Throw Guarantee
-    bool empty() const noexcept
+    [[nodiscard]] bool empty() const noexcept
     {
         return size() == 0;
     }
@@ -205,41 +218,62 @@ public:
 
 // resize
 // See header for info.
-    void resize(FSArray::size_type newsize)
+    void resize(size_type newsize)
     {
-        if(newsize > _capacity){
+        _size = newsize;
+        if(newsize > _capacity) {
             _capacity *= 2;
-            _size = newsize;
+
+            auto *newArray = new value_type[_size];
+            std::memcpy(newArray, _data, _capacity);
+            delete[] _data;
+            _data = newArray;
+        }
+        else{
+
         }
     }
 
 
 // insert
 // See header for info.
-    FSArray::iterator insert(FSArray::iterator pos,
-                                      const FSArray::value_type & item)
+    iterator insert(iterator pos, const value_type & item)
     {
-        // TODO: WRITE THIS!!!
-        return begin();  // DUMMY
+        if(_size == _capacity){
+            _capacity *= 2;
+        }
+        _size += _size;
+        value_type temp = *pos;
+        *pos = item;
+        // comment and explain how this is done
+        for(auto i=pos+1; i<end()-1;i++){
+            auto temp2 = *pos;
+            *pos = temp;
+            temp = temp2;
+        }
+        return pos;  // DUMMY
     }
 
 
 // erase
 // See header for info.
-    FSArray::iterator erase(FSArray::iterator pos)
+    iterator erase(iterator pos)
     {
-        // TODO: WRITE THIS!!!
-        return begin();  // DUMMY
+        for(auto i=pos; i<end()-1;i++){
+            pos = pos+1;
+        }
+        _size -= _size;
+        return pos;  // DUMMY
     }
 
 
 // swap
 // See header for info.
-    void swap(FSArray & other) noexcept
+    void swap(FSTArray & other) noexcept
     {
         std::swap(_data, other._data);
         std::swap(_size, other._size);
-        std::swap(_capacity, other._capacity)
+        std::swap(_capacity, other._capacity);
     }
 
     // push_back
@@ -256,7 +290,7 @@ public:
         erase(end()-1);
     }
 
-// ***** FSArray: data members *****
+// ***** FSTArray: data members *****
 private:
 
     // Below, _capacity must be declared before _data
@@ -264,8 +298,8 @@ private:
     size_type    _size;      // Size of client's data
     value_type * _data;      // Pointer to our array
 
-};  // End class FSArray
+};  // End class FSTArray
 
 
-#endif  //#ifndef FILE_FSARRAY_H_INCLUDED
+#endif  //#ifndef FILE_FSTArray_H_INCLUDED
 

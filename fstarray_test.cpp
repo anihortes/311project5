@@ -1193,10 +1193,12 @@ TEST_CASE( "FSTArray resize" )
         const size_t SIZE = size_t(10);
         const size_t SIZE2 = size_t(50000000);
         FSTArray<int> ti(SIZE);
+
         for (size_t i = 0; i < SIZE; ++i)
         {
             ti[i] = 15-int(i)*int(i);
         }
+
         int * savedata = ti.begin();
 
         // Resize
@@ -1215,6 +1217,7 @@ TEST_CASE( "FSTArray resize" )
         INFO( "resize - check values" );
         for (size_t i = 0; i < SIZE; ++i)  // SIZE, not SIZE2
         {
+            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
             REQUIRE( ti[i] == 15-int(i)*int(i) );
         }
         }
