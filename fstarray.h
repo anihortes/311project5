@@ -47,6 +47,7 @@
 // For std::size_t
 #include <algorithm>
 // For std::max
+// For std::swap
 
 
 // *********************************************************************
@@ -98,11 +99,21 @@ public:
 
     // Copy ctor
     // Strong Guarantee
-    FSArray(const FSArray & other);
+    FSArray(const FSArray & other):
+        _capacity(other._capacity),
+        _size(other.size()),
+        _data(other._capacity == 0 ? nullptr
+            : new value_type[other._capacity])
+    {
+        //_data = new value_type[_size];
+        for(auto i=0; i<_size; i++){
+            *_data[i] = *FSArray._data[i];
+        }
+    }
 
     // Move ctor
     // No-Throw Guarantee
-    FSArray::FSArray(FSArray && other) noexcept
+    FSArray(FSArray && other) noexcept
             :_capacity(other._capacity),
              _size(other._size),
              _data(other._data)
@@ -114,17 +125,18 @@ public:
 
     // Copy assignment operator
     // ??? Guarantee
-    FSArray & FSArray::operator=(const FSArray & other)
+    FSArray & operator=(const FSArray & other)
     {
-        // TODO: WRITE THIS!!!
+        FSArray copyRhs(other);
+        arraySwap(copyRhs);
         return *this; // DUMMY
     }
 
     // Move assignment operator
     // No-Throw Guarantee
-    FSArray & FSArray::operator=(FSArray && other) noexcept
+    FSArray & operator=(FSArray && other) noexcept
     {
-        // TODO: WRITE THIS!!!
+        arraySwap(other)
         return *this; // DUMMY
     }
 
@@ -193,15 +205,18 @@ public:
 
 // resize
 // See header for info.
-    void FSArray::resize(FSArray::size_type newsize)
+    void resize(FSArray::size_type newsize)
     {
-        // TODO: WRITE THIS!!!
+        if(newsize > _capacity){
+            _capacity *= 2;
+            _size = newsize;
+        }
     }
 
 
 // insert
 // See header for info.
-    FSArray::iterator FSArray::insert(FSArray::iterator pos,
+    FSArray::iterator insert(FSArray::iterator pos,
                                       const FSArray::value_type & item)
     {
         // TODO: WRITE THIS!!!
@@ -211,7 +226,7 @@ public:
 
 // erase
 // See header for info.
-    FSArray::iterator FSArray::erase(FSArray::iterator pos)
+    FSArray::iterator erase(FSArray::iterator pos)
     {
         // TODO: WRITE THIS!!!
         return begin();  // DUMMY
@@ -220,9 +235,11 @@ public:
 
 // swap
 // See header for info.
-    void FSArray::swap(FSArray & other) noexcept
+    void swap(FSArray & other) noexcept
     {
-        // TODO: WRITE THIS!!!
+        std::swap(_data, other._data);
+        std::swap(_size, other._size);
+        std::swap(_capacity, other._capacity)
     }
 
     // push_back
