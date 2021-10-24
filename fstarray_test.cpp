@@ -317,6 +317,7 @@ bool operator<([[maybe_unused]] const Counter & a,
 // Test Cases
 // *********************************************************************
 
+/*
 
 TEST_CASE( "FSTArray member types" )
 {
@@ -1202,8 +1203,25 @@ TEST_CASE( "FSTArray resize" )
         int * savedata = ti.begin();
 
         // Resize
+
         ti.resize(SIZE2);
+
+        */
+/*for (size_t i = 0; i < SIZE2; i++)
+        {
+            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
+        }*//*
+
         ti[SIZE2-1] = 1000;  // Do a write, just for fun
+        //std::cout << "test\n";
+
+        */
+/*for (size_t i = 0; i < SIZE; ++i)
+        {
+            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
+        }
+        std::cout << "TEST3:\n";*//*
+
 
         {
         INFO( "resize - check size" );
@@ -1217,7 +1235,7 @@ TEST_CASE( "FSTArray resize" )
         INFO( "resize - check values" );
         for (size_t i = 0; i < SIZE; ++i)  // SIZE, not SIZE2
         {
-            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
+            //std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
             REQUIRE( ti[i] == 15-int(i)*int(i) );
         }
         }
@@ -1241,9 +1259,11 @@ TEST_CASE( "FSTArray resize" )
         {
             int * savedata = ti.begin();
             ti.resize(i);
-            if (i == size_t(1000))  // Do a write during resizes
-                ti[i-size_t(1)] = 1000;
-            bool reallocdone = (ti.begin() != savedata);  // realloc-&-copy?
+            if (i == size_t(1000)) {  // Do a write during resizes
+                ti[i - size_t(1)] = 1000;
+            }
+            bool reallocdone = (ti.begin() != savedata);
+            // realloc-&-copy?
             if (reallocdone)
             {
                 ++realloccount;
@@ -1252,6 +1272,8 @@ TEST_CASE( "FSTArray resize" )
             }
             realloclast = reallocdone;
         }
+        //cout << "6 ti[999]: " << ti[999] << std::endl;
+
         {
         INFO( "Many resizes - how many reallocate-and-copy ops" );
         REQUIRE( realloccount >= 3 );
@@ -1280,6 +1302,7 @@ TEST_CASE( "FSTArray resize" )
         }
     }
 }
+*/
 
 
 TEST_CASE( "FSTArray insert" )
@@ -1290,6 +1313,7 @@ TEST_CASE( "FSTArray insert" )
     {
         ti_original[i] = 15-int(i)*int(i);
     }
+/*
 
     SUBCASE( "insert at end" )
     {
@@ -1359,6 +1383,7 @@ TEST_CASE( "FSTArray insert" )
         REQUIRE( result == ti.begin()+5 );
         }
     }
+*/
 
     SUBCASE( "Multiple insert-at-end calls" )
     {
@@ -1379,20 +1404,32 @@ TEST_CASE( "FSTArray insert" )
         bool realloclast = false;   // Was realloc-&-copy just done?
         for (size_t i = SIZE+1; i <= SIZE2; ++i)
         {
+            std::cout<<"capacity: " << ti.cap()<<std::endl;
+            std::cout<<"size: " << ti.size()<<std::endl;
             int * savedata = ti.begin();
             auto result = ti.insert(ti.end(), 70000-int(ti.size()));
+            std::cout<<"and capacity: " << ti.cap()<<std::endl;
+            std::cout<<"and size: " << ti.size()<<std::endl;
             bool reallocdone = (ti.begin() != savedata);  // realloc-&-copy?
+            std::cout<<"test 1\n";
             if (reallocdone)
             {
+                std::cout<<"test 2\n";
                 ++realloccount;
+                std::cout<<"test 3\n";
                 if (realloclast)
                     realloctwice = true;
                 {
+                    std::cout<<"test 4\n";
                 INFO( "Many inserts - check return value on reallocate-and-copy" );
                 REQUIRE( result == ti.end()-1 );
+                    std::cout<<"test 5\n";
                 }
+                std::cout<<"test 6\n";
             }
+            std::cout<<"test 7\n";
             realloclast = reallocdone;
+            std::cout<<"test 8\n";
         }
         {
         INFO( "Many inserts - how many reallocate-and-copy ops" );

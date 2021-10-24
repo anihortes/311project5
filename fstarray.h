@@ -50,7 +50,7 @@
 // For std::swap
 #include <stdexcept>
 // For std::out_of_range
-#include <cstring>
+#include <array>
 // For std::memcpy
 
 #include <iostream>
@@ -112,9 +112,12 @@ public:
         _data(other._capacity == 0 ? nullptr
             : new value_type[other._capacity])
     {
-        //_data = new value_type[_size];
-        for(auto i=0; i<_size; i++){
-            _data[i] = other._data[i];
+        try {
+            std::copy(other.begin(), other.end(), begin());
+        }
+        catch(...){
+            //if it fails and exits...delete this pointer?
+            delete [] _data;
         }
     }
 
@@ -186,6 +189,12 @@ public:
         return _size;
     }
 
+    //FOR TESTING, DELETE LATER
+    [[nodiscard]] size_type cap() const noexcept
+    {
+        return _capacity;
+    }
+
     // empty
     // No-Throw Guarantee
     [[nodiscard]] bool empty() const noexcept
@@ -220,18 +229,26 @@ public:
 // See header for info.
     void resize(size_type newsize)
     {
-        _size = newsize;
         if(newsize > _capacity) {
-            _capacity *= 2;
+            _capacity = 2*newsize;
+            auto *newArray = new value_type[_capacity];
+            try {
+                std::copy(_data, _data+_size, newArray);
+                //point to copied data with larger _capacity
+                _data = newArray;
 
-            auto *newArray = new value_type[_size];
-            std::memcpy(newArray, _data, _capacity);
-            delete[] _data;
-            _data = newArray;
+                // newArray no longer points to vital data
+                newArray = nullptr;
+                // delete pointer
+                delete[] newArray;
+            }
+            catch(...){
+                // if copy fails, delete newArray pointer and exit
+                // copy should not destroy original data
+                delete[] newArray;
+            }
         }
-        else{
-
-        }
+        _size = newsize;
     }
 
 
@@ -239,18 +256,14 @@ public:
 // See header for info.
     iterator insert(iterator pos, const value_type & item)
     {
-        if(_size == _capacity){
-            _capacity *= 2;
+        if(_size == _capacity) {
+            resize(_size+1);
         }
-        _size += _size;
-        value_type temp = *pos;
-        *pos = item;
-        // comment and explain how this is done
-        for(auto i=pos+1; i<end()-1;i++){
-            auto temp2 = *pos;
-            *pos = temp;
-            temp = temp2;
+        else {
+            _size++;
         }
+        *end() = item;
+        std::rotate(pos, end(), end()+1);
         return pos;  // DUMMY
     }
 
@@ -259,11 +272,9 @@ public:
 // See header for info.
     iterator erase(iterator pos)
     {
-        for(auto i=pos; i<end()-1;i++){
-            pos = pos+1;
-        }
-        _size -= _size;
-        return pos;  // DUMMY
+        _size--;
+        std::rotate(begin(), pos, end());
+        return pos;
     }
 
 
