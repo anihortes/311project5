@@ -46,12 +46,10 @@
 #include <cstddef>
 // For std::size_t
 #include <algorithm>
-// For std::max
+// For std::copy
 // For std::swap
 #include <stdexcept>
 // For std::out_of_range
-#include <array>
-// For std::memcpy
 
 #include <iostream>
 
@@ -197,7 +195,7 @@ public:
 
     // empty
     // No-Throw Guarantee
-    [[nodiscard]] bool empty() const noexcept
+    [[maybe_unused]] [[nodiscard]] bool empty() const noexcept
     {
         return size() == 0;
     }
@@ -231,18 +229,15 @@ public:
     {
         if(newsize > _capacity) {
             _capacity = 2*newsize;
+
             auto *newArray = new value_type[_capacity];
             try {
                 std::copy(_data, _data+_size, newArray);
-                //point to copied data with larger _capacity
+                //point data to copied data with larger _capacity
+                delete[] _data;
                 _data = newArray;
-
-                // newArray no longer points to vital data
-                newArray = nullptr;
-                // delete pointer
-                delete[] newArray;
             }
-            catch(...){
+            catch(std::bad_alloc &e){
                 // if copy fails, delete newArray pointer and exit
                 // copy should not destroy original data
                 delete[] newArray;
@@ -264,7 +259,7 @@ public:
         }
         *end() = item;
         std::rotate(pos, end(), end()+1);
-        return pos;  // DUMMY
+        return pos;
     }
 
 
