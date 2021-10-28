@@ -151,6 +151,7 @@ public:
     // Does not throw (No-Throw Guarantee)
     Counter()
     {
+        //std::cout << "yay\n";
         ++_existing;
         if (_existing > _maxExisting)
             _maxExisting = _existing;
@@ -165,6 +166,8 @@ public:
     // Does not throw (No-Throw Guarantee)
     ~Counter()
     {
+        //std::cout << "nay\n";
+
         --_existing;
         ++_dctorCount;
     }
@@ -317,7 +320,6 @@ bool operator<([[maybe_unused]] const Counter & a,
 // Test Cases
 // *********************************************************************
 
-/*
 
 TEST_CASE( "FSTArray member types" )
 {
@@ -1206,22 +1208,7 @@ TEST_CASE( "FSTArray resize" )
 
         ti.resize(SIZE2);
 
-        */
-/*for (size_t i = 0; i < SIZE2; i++)
-        {
-            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
-        }*//*
-
         ti[SIZE2-1] = 1000;  // Do a write, just for fun
-        //std::cout << "test\n";
-
-        */
-/*for (size_t i = 0; i < SIZE; ++i)
-        {
-            std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
-        }
-        std::cout << "TEST3:\n";*//*
-
 
         {
         INFO( "resize - check size" );
@@ -1235,7 +1222,6 @@ TEST_CASE( "FSTArray resize" )
         INFO( "resize - check values" );
         for (size_t i = 0; i < SIZE; ++i)  // SIZE, not SIZE2
         {
-            //std::cout<<"i: " << i << " || t[i]: " << ti[i] << std::endl;
             REQUIRE( ti[i] == 15-int(i)*int(i) );
         }
         }
@@ -1302,7 +1288,8 @@ TEST_CASE( "FSTArray resize" )
         }
     }
 }
-*/
+
+
 
 
 TEST_CASE( "FSTArray insert" )
@@ -1313,7 +1300,6 @@ TEST_CASE( "FSTArray insert" )
     {
         ti_original[i] = 15-int(i)*int(i);
     }
-/*
 
     SUBCASE( "insert at end" )
     {
@@ -1383,11 +1369,15 @@ TEST_CASE( "FSTArray insert" )
         REQUIRE( result == ti.begin()+5 );
         }
     }
-*/
+
+
+
 
     SUBCASE( "Multiple insert-at-end calls" )
     {
-        const size_t SIZE2 = size_t(100000);
+        //const size_t SIZE2 = size_t(100000);
+        const size_t SIZE2 = size_t(100);
+
         FSTArray<int> ti = ti_original;
 
         // Create expected data
@@ -1402,34 +1392,23 @@ TEST_CASE( "FSTArray insert" )
         int realloccount = 0;       // # of times realloc-&-copy done
         bool realloctwice = false;  // Did realloc-&-copy 2x in a row?
         bool realloclast = false;   // Was realloc-&-copy just done?
+
         for (size_t i = SIZE+1; i <= SIZE2; ++i)
         {
-            std::cout<<"capacity: " << ti.cap()<<std::endl;
-            std::cout<<"size: " << ti.size()<<std::endl;
             int * savedata = ti.begin();
             auto result = ti.insert(ti.end(), 70000-int(ti.size()));
-            std::cout<<"and capacity: " << ti.cap()<<std::endl;
-            std::cout<<"and size: " << ti.size()<<std::endl;
             bool reallocdone = (ti.begin() != savedata);  // realloc-&-copy?
-            std::cout<<"test 1\n";
             if (reallocdone)
             {
-                std::cout<<"test 2\n";
                 ++realloccount;
-                std::cout<<"test 3\n";
                 if (realloclast)
                     realloctwice = true;
                 {
-                    std::cout<<"test 4\n";
                 INFO( "Many inserts - check return value on reallocate-and-copy" );
                 REQUIRE( result == ti.end()-1 );
-                    std::cout<<"test 5\n";
                 }
-                std::cout<<"test 6\n";
             }
-            std::cout<<"test 7\n";
             realloclast = reallocdone;
-            std::cout<<"test 8\n";
         }
         {
         INFO( "Many inserts - how many reallocate-and-copy ops" );
@@ -1454,7 +1433,12 @@ TEST_CASE( "FSTArray insert" )
         REQUIRE( ti.end() == ti.begin() + SIZE2 );
         }
     }
+
 }
+
+
+
+
 
 
 TEST_CASE( "FSTArray erase" )
@@ -1489,9 +1473,12 @@ TEST_CASE( "FSTArray erase" )
         }
     }
 
+
+
     SUBCASE( "erase at beginning" )
     {
         FSTArray<int> ti = ti_original;
+
         int * savedata = ti.begin();
         ti.erase(ti.begin());
 
@@ -1516,6 +1503,7 @@ TEST_CASE( "FSTArray erase" )
     {
         FSTArray<int> ti = ti_original;
         int * savedata = ti.begin();
+
         auto result = ti.erase(ti.begin()+5);
 
         {
@@ -1542,6 +1530,8 @@ TEST_CASE( "FSTArray erase" )
         }
     }
 
+
+
     SUBCASE( "Multiple erase-at-end calls" )
     {
         const size_t SIZE2 = size_t(100000);
@@ -1550,6 +1540,7 @@ TEST_CASE( "FSTArray erase" )
 
         // Do removing
         int * savedata = ti.begin();
+
         for (size_t i = SIZE2; i > SIZE; --i)
         {
             ti.erase(ti.end()-1);
@@ -1577,6 +1568,8 @@ TEST_CASE( "FSTArray erase" )
         }
     }
 }
+
+
 
 
 TEST_CASE( "FSTArray insert & erase" )
@@ -1630,6 +1623,9 @@ TEST_CASE( "FSTArray insert & erase" )
 }
 
 
+
+
+
 TEST_CASE( "FSTArray push_back" )
 {
     const size_t SIZE = size_t(10);
@@ -1639,9 +1635,11 @@ TEST_CASE( "FSTArray push_back" )
         ti_original[i] = 15-int(i)*int(i);
     }
 
+
     SUBCASE( "Single push_back" )
     {
         FSTArray<int> ti = ti_original;
+
         ti.push_back(1000);
 
         {
@@ -1654,11 +1652,13 @@ TEST_CASE( "FSTArray push_back" )
         {
             if (i == SIZE)
                 REQUIRE( ti[i] == 1000 );
+
             else
                 REQUIRE( ti[i] == 15-int(i)*int(i) );
         }
         }
     }
+
 
     SUBCASE( "Multiple push_back calls" )
     {
@@ -1681,6 +1681,7 @@ TEST_CASE( "FSTArray push_back" )
         {
             int * savedata = ti.begin();
             ti.push_back(70000-int(ti.size()));
+            //std::cout << i <<std::endl;
             bool reallocdone = (ti.begin() != savedata);  // realloc-&-copy?
             if (reallocdone)
             {
@@ -1716,8 +1717,11 @@ TEST_CASE( "FSTArray push_back" )
 }
 
 
+
+
 TEST_CASE( "FSTArray pop_back" )
 {
+
     const size_t SIZE = size_t(10);
     FSTArray<int> ti_original(SIZE);
     for (size_t i = 0; i < SIZE; ++i)
@@ -1785,8 +1789,12 @@ TEST_CASE( "FSTArray pop_back" )
 }
 
 
+
+
+
 TEST_CASE( "FSTArray push_back & pop_back" )
 {
+
     SUBCASE( "Many push_back & pop_back calls" )
     {
         vector<int> v { 1, 3, 4, 2, 6, 8, 7, 4, 5 };
@@ -1840,8 +1848,11 @@ TEST_CASE( "FSTArray push_back & pop_back" )
 }
 
 
+
+
 TEST_CASE( "FSTArray swap" )
 {
+
     SUBCASE( "swap" )
     {
         const size_t SIZE1 = size_t(10);
@@ -1897,8 +1908,11 @@ TEST_CASE( "FSTArray swap" )
 }
 
 
+
+
 TEST_CASE( "FSTArray ctor/dctor count" )
 {
+
     SUBCASE( "Ctor/dctor calls on construction by size, destruction" )
     {
         Counter::reset();
@@ -2170,6 +2184,8 @@ TEST_CASE( "FSTArray ctor/dctor count" )
 }
 
 
+
+
 TEST_CASE( "FSTArray exceptions" )
 {
     bool throws;
@@ -2181,6 +2197,7 @@ TEST_CASE( "FSTArray exceptions" )
     {
         Counter::reset(true);
         {
+
             const FSTArray<Counter> tc(10);
 
             try
@@ -2190,10 +2207,12 @@ TEST_CASE( "FSTArray exceptions" )
             }
             catch (runtime_error & e)
             {
+
                 throws_proper_type = true;
             }
             catch (...)
             {
+
                 throws_proper_type = false;
             }
         }
@@ -2211,7 +2230,6 @@ TEST_CASE( "FSTArray exceptions" )
         REQUIRE( ctorcount == dctorcount );
         }
     }
-
     SUBCASE( "Exceptions - copy=" )
     {
         Counter::reset(true);

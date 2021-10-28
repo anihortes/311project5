@@ -1,44 +1,10 @@
-// FSTArray.h  INCOMPLETE
-// VERSION 6
-// Glenn G. Chappell
-// Started: 2021-10-12
-// Updated: 2021-10-20
+// FSTArray.h
+// A. Harrison Owen
+// Started: 2021-10-15
+// Updated: 2021-10-28
 //
 // For CS 311 Fall 2021
-// Header for class FSTArray
 // Frightfully smart array of int
-// Preliminary to Project 5
-
-// History:
-// - v1:
-//   - Bare-bones only, does not compile. Header & source files,
-//     #ifndef, #include, empty class definition.
-// - v2:
-//   - Add member types value_type, size_type, iterator, const_iterator.
-//   - Add dummy versions (at least) of all member functions, including
-//     dummy return statements for non-void functions. Package compiles.
-//   - Add data members.
-//   - Add class invariants.
-//   - Write (untested versions of) the following member functions:
-//     default ctor, ctor from size (these two are single func), dctor,
-//     op[], size, empty, begin, end, push_back, pop_back.
-// - v3:
-//   - Document exception-safety guarantees for most functions.
-//   - Write copy ctor.
-// - v4:
-//   - Revise class invariants to allow for _data being nullptr if _size
-//     is zero.
-//   - Revise ctor from size, copy ctor accordingly.
-//   - Write move ctor.
-//   - Mark various functions as noexcept.
-// - v5:
-//   - Move func defs to source file: copy & move ops, resize, insert,
-//     erase, swap.
-// - v6:
-//   - Add _capacity data member.
-//   - Revise class invariants & ctors accordingly.
-//   - Add constant DEFAULT_CAP and use it in setting the capacity in
-//     default ctor/ctor from size.
 
 #ifndef FILE_FSTArray_H_INCLUDED
 #define FILE_FSTArray_H_INCLUDED
@@ -106,7 +72,7 @@ public:
     // Strong Guarantee
     FSTArray(const FSTArray & other):
         _capacity(other._capacity),
-        _size(other.size()),
+        _size(other._size),
         _data(other._capacity == 0 ? nullptr
             : new value_type[other._capacity])
     {
@@ -116,7 +82,10 @@ public:
         catch(...){
             //if it fails and exits...delete this pointer?
             delete [] _data;
+            throw;
         }
+
+
     }
 
     // Move ctor
@@ -137,7 +106,7 @@ public:
     {
         FSTArray copyRhs(other);
         swap(copyRhs);
-        return *this; // DUMMY
+        return *this;
     }
 
     // Move assignment operator
@@ -163,6 +132,7 @@ public:
     //     index must be non-zero
     //     index must not be greater than size of array
     // No-Throw Guarantee
+    // Exception Neutral
     value_type & operator[](size_type index)
     {
         // throw try functions here
@@ -170,6 +140,7 @@ public:
             throw std::out_of_range("bad index.");
         return _data[index];
     }
+
     const value_type & operator[](size_type index) const
     {
         if(index < 0 || index > _size)
@@ -182,19 +153,15 @@ public:
 
     // size
     // No-Throw Guarantee
+    // Exception neutral
     [[nodiscard]] size_type size() const noexcept
     {
         return _size;
     }
 
-    //FOR TESTING, DELETE LATER
-    [[nodiscard]] size_type cap() const noexcept
-    {
-        return _capacity;
-    }
-
     // empty
     // No-Throw Guarantee
+    // Exception neutral
     [[maybe_unused]] [[nodiscard]] bool empty() const noexcept
     {
         return size() == 0;
@@ -202,6 +169,7 @@ public:
 
     // begin - non-const & const
     // No-Throw Guarantee
+    // Exception neutral
     iterator begin() noexcept
     {
         return _data;
@@ -213,6 +181,7 @@ public:
 
     // end - non-const & const
     // No-Throw Guarantee
+    // Exception neutral
     iterator end() noexcept
     {
         return begin() + size();
@@ -224,73 +193,111 @@ public:
 
 
 // resize
-// See header for info.
+// Strong Guarantee
+// Exception neutral
+// Pre:
+//     newsize must be non-zero
     void resize(size_type newsize)
     {
-        if(newsize > _capacity) {
+        if(newsize >= _capacity) {
             _capacity = 2*newsize;
-
             auto *newArray = new value_type[_capacity];
             try {
                 std::copy(_data, _data+_size, newArray);
-                //point data to copied data with larger _capacity
+                //clean up _data ptr
                 delete[] _data;
                 _data = newArray;
             }
-            catch(std::bad_alloc &e){
+            catch(...){
                 // if copy fails, delete newArray pointer and exit
                 // copy should not destroy original data
                 delete[] newArray;
+                throw;
             }
         }
         _size = newsize;
+
     }
 
 
 // insert
-// See header for info.
+// Strong Guarantee
+// Exception neutral
+// Pre:
+//     iterator must be non-zero and smaller than size
     iterator insert(iterator pos, const value_type & item)
     {
-        if(_size == _capacity) {
-            resize(_size+1);
+        auto tempPosition = pos - _data;
+        if(_size > _capacity) {
+            _capacity *= 2;
+            auto *newArray = new value_type[_capacity];
+            try {
+                std::copy(_data, _data+_size, newArray);
+                //point data to copied data with larger _capacity
+                _data = nullptr;
+                delete[] _data;
+                _data = newArray;
+            }
+            catch(...){
+                // if copy fails, delete newArray pointer and exit
+                // copy should not destroy original data
+                delete[] newArray;
+                throw;
+            }
         }
-        else {
-            _size++;
+
+        _size++;
+        *(end()-1) = item;
+
+        if(tempPosition != _size){
+            std::rotate(_data+tempPosition, end()-1, end());
         }
-        *end() = item;
-        std::rotate(pos, end(), end()+1);
-        return pos;
+
+        return _data+tempPosition;
     }
 
 
 // erase
-// See header for info.
+// Strong Guarantee
+// Exception neutral
     iterator erase(iterator pos)
     {
+        auto saveEnd = end();
+        try {
+            if (pos != end()) {
+                std::rotate(pos, pos + 1, end());
+            }
+        }
+        catch(...){
+            end() = saveEnd();
+            throw;
+        }
         _size--;
-        std::rotate(begin(), pos, end());
         return pos;
     }
 
 
 // swap
-// See header for info.
+// No-throw Guarantee
+// Exception neutral
     void swap(FSTArray & other) noexcept
     {
-        std::swap(_data, other._data);
-        std::swap(_size, other._size);
-        std::swap(_capacity, other._capacity);
+            std::swap(_data, other._data);
+            std::swap(_size, other._size);
+            std::swap(_capacity, other._capacity);
     }
 
     // push_back
-    // ??? Guarantee
+    // Strong Guarantee
+    // Exception neutral
     void push_back(const value_type & item)
     {
         insert(end(), item);
     }
 
     // pop_back
-    // ??? Guarantee
+    // Strong Guarantee
+    // Exception neutral
     void pop_back()
     {
         erase(end()-1);

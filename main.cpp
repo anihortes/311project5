@@ -1,20 +1,16 @@
 #include <iostream>
-#include <algorithm>
+using std::cout;
+using std::endl;
+// fstarray_test.cpp doctest.h fstarray.h
+#include "fstarray.h"
 
 int main() {
-    int *ptr = new int [10];
-    for(auto i=0;i<10;i++){
-        ptr[i]=i;
-    }
-
-    int *newPtr = new int [500000000];
-    try {
-        std::copy(ptr, ptr + 10, newPtr);
-        delete[] ptr;
-        ptr = newPtr;
-    }
-    catch(std::bad_alloc &e){
-        delete [] newPtr;
+    FSTArray<int> a(10);
+    FSTArray<int> b(a);
+    for(auto i=0; i< a.size(); i++){
+        std::cout <<i<<std::endl;
+        std::cout << a[i]<<std::endl;
+        std::cout << b[i]<<std::endl;
     }
 
     return 0;
