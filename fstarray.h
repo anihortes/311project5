@@ -17,8 +17,6 @@
 #include <stdexcept>
 // For std::out_of_range
 
-#include <iostream>
-
 // *********************************************************************
 // class FSTArray - Class definition
 // *********************************************************************
@@ -84,8 +82,6 @@ public:
             delete [] _data;
             throw;
         }
-
-
     }
 
     // Move ctor
@@ -101,7 +97,7 @@ public:
     }
 
     // Copy assignment operator
-    // ??? Guarantee
+    // No-throw Guarantee
     FSTArray & operator=(const FSTArray & other)
     {
         FSTArray copyRhs(other);
@@ -135,16 +131,11 @@ public:
     // Exception Neutral
     value_type & operator[](size_type index)
     {
-        // throw try functions here
-        if(index < 0 || index > _size)
-            throw std::out_of_range("bad index.");
         return _data[index];
     }
 
     const value_type & operator[](size_type index) const
     {
-        if(index < 0 || index > _size)
-            throw std::out_of_range("bad index.");
         return _data[index];
     }
 
@@ -203,7 +194,7 @@ public:
             _capacity = 2*newsize;
             auto *newArray = new value_type[_capacity];
             try {
-                std::copy(_data, _data+_size, newArray);
+                std::copy(_data, _data+size(), newArray);
                 //clean up _data ptr
                 delete[] _data;
                 _data = newArray;
@@ -227,33 +218,17 @@ public:
 //     iterator must be non-zero and smaller than size
     iterator insert(iterator pos, const value_type & item)
     {
-        auto tempPosition = pos - _data;
-        if(_size > _capacity) {
-            _capacity *= 2;
-            auto *newArray = new value_type[_capacity];
-            try {
-                std::copy(_data, _data+_size, newArray);
-                //point data to copied data with larger _capacity
-                _data = nullptr;
-                delete[] _data;
-                _data = newArray;
-            }
-            catch(...){
-                // if copy fails, delete newArray pointer and exit
-                // copy should not destroy original data
-                delete[] newArray;
-                throw;
-            }
-        }
-
-        _size++;
+        // if data is reallocated, then we will have to
+        // save distance from iterator to begin()
+        auto tempPosition = pos - begin();
+        resize(size()+1);
         *(end()-1) = item;
 
-        if(tempPosition != _size){
-            std::rotate(_data+tempPosition, end()-1, end());
+        if(tempPosition != size()){
+            std::rotate(begin()+tempPosition, end()-1, end());
         }
 
-        return _data+tempPosition;
+        return begin()+tempPosition;
     }
 
 
@@ -262,14 +237,12 @@ public:
 // Exception neutral
     iterator erase(iterator pos)
     {
-        auto saveEnd = end();
         try {
             if (pos != end()) {
                 std::rotate(pos, pos + 1, end());
             }
         }
         catch(...){
-            end() = saveEnd();
             throw;
         }
         _size--;
